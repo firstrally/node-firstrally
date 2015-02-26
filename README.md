@@ -1,2 +1,2 @@
-# First Rally api for Node / Javascript
+# First Rally API for Node / Javascript
 Coming soon.
