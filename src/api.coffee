@@ -87,54 +87,53 @@ include.call this, (request, jsSHA, btoa) ->
               done(body, body)
               return
 
-            error = new FirstRally.API.Error(response.statusCode, errors)
+            error = new FirstRally.Error(response.statusCode, errors)
 
         done(error, body)
 
-  class FirstRally
-    class @API extends Base
-      class @Error extends Error
-        # @original is the original error object returned from the server.
-        # It's expected to be an array.
-        constructor: (@statusCode, @original) ->
-          message = ""
+  class FirstRally extends Base
+    class @Error extends Error
+      # @original is the original error object returned from the server.
+      # It's expected to be an array.
+      constructor: (@statusCode, @original) ->
+        message = ""
 
-          for error in @original
-            message += " " if message.length != 0
-            message += error.message + "."
+        for error in @original
+          message += " " if message.length != 0
+          message += error.message + "."
 
-          @message = message
-          @name = "FirstRally.API.Error"
+        @message = message
+        @name = "FirstRally.Error"
 
-      class @User extends Base 
-        @path_prefix: "/user"
-        @update_profile: (profile, done) ->
-          @post "/profile", profile, done
+    class @User extends Base 
+      @path_prefix: "/user"
+      @update_profile: (profile, done) ->
+        @post "/profile", profile, done
 
-        @reset_password: (new_password, current_password, done) ->
-          @post "/password", {new_password, current_password}, done
+      @reset_password: (new_password, current_password, done) ->
+        @post "/password", {new_password, current_password}, done
 
-        # For browser-based usage.
-        @login: (email, password, done) ->
-          @post login, {email, password}, done
+      # For browser-based usage.
+      @login: (email, password, done) ->
+        @post login, {email, password}, done
 
-      class @Notification extends Base
-        @path_prefix: "/notification"
-        @create: (stream_id, price, direction, done) ->
-          @post "/new", {stream_id, price, direction}, done
+    class @Notification extends Base
+      @path_prefix: "/notification"
+      @create: (stream_id, price, direction, done) ->
+        @post "/new", {stream_id, price, direction}, done
 
-        @delete: (notification_id) ->
-          @delete "/#{notification_id}", done
+      @delete: (notification_id) ->
+        @delete "/#{notification_id}", done
 
-      class @DataBatch extends Base
-        @path_prefix: "/data_batch"
-        @create: (stream_id, start_date, end_date, done) ->
-          @post "/new", {exchange_identifier: stream_id, start_date, end_date}, done 
+    class @DataBatch extends Base
+      @path_prefix: "/data_batch"
+      @create: (stream_id, start_date, end_date, done) ->
+        @post "/new", {exchange_identifier: stream_id, start_date, end_date}, done 
 
-      class @BatchFile extends Base
-        @path_prefix: "/batch_file"
-        @download: (batch_file_id, done) ->
-          @get "/#{batch_file_id}/download", done
+    class @BatchFile extends Base
+      @path_prefix: "/batch_file"
+      @download: (batch_file_id, done) ->
+        @get "/#{batch_file_id}/download", done
 
   return FirstRally
     
