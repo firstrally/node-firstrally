@@ -1,6 +1,6 @@
 #!/usr/bin/env coffee
 
-FirstRally = require "./src/api"
+FirstRally = require "./dist/firstrally-api"
 
 FirstRally.set
  api_key: "fec3388c5ed5471a158686533598d5b3"

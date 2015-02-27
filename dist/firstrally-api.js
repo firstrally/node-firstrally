@@ -37,7 +37,7 @@ d[4].b,d[5].a,d[5].b];else if("SHA-512"===c)a=[d[0].a,d[0].b,d[1].a,d[1].b,d[2].
 
   include = function(factory) {
     var btoa, jQuery, jsSHA, request;
-    if (typeof exports === 'object') {
+    if ((typeof module !== "undefined" && module !== null) && (module.exports != null)) {
       request = require("request");
       btoa = require("btoa");
       jsSHA = require("../lib/jsSHA/src/sha512");
@@ -136,7 +136,7 @@ d[4].b,d[5].a,d[5].b];else if("SHA-512"===c)a=[d[0].a,d[0].b,d[1].a,d[1].b,d[2].
                 done(body, body);
                 return;
               }
-              error = new FirstRally.API.Error(response.statusCode, errors);
+              error = new FirstRally.Error(response.statusCode, errors);
             }
           }
           return done(error, body);
@@ -146,141 +146,134 @@ d[4].b,d[5].a,d[5].b];else if("SHA-512"===c)a=[d[0].a,d[0].b,d[1].a,d[1].b,d[2].
       return Base;
 
     })();
-    FirstRally = (function() {
-      function FirstRally() {}
+    FirstRally = (function(superClass) {
+      extend(FirstRally, superClass);
 
-      FirstRally.API = (function(superClass) {
-        extend(API, superClass);
+      function FirstRally() {
+        return FirstRally.__super__.constructor.apply(this, arguments);
+      }
 
-        function API() {
-          return API.__super__.constructor.apply(this, arguments);
+      FirstRally.Error = (function(superClass1) {
+        extend(Error, superClass1);
+
+        function Error(statusCode, original) {
+          var error, i, len, message, ref;
+          this.statusCode = statusCode;
+          this.original = original;
+          message = "";
+          ref = this.original;
+          for (i = 0, len = ref.length; i < len; i++) {
+            error = ref[i];
+            if (message.length !== 0) {
+              message += " ";
+            }
+            message += error.message + ".";
+          }
+          this.message = message;
+          this.name = "FirstRally.Error";
         }
 
-        API.Error = (function(superClass1) {
-          extend(Error, superClass1);
+        return Error;
 
-          function Error(statusCode, original) {
-            var error, i, len, message, ref;
-            this.statusCode = statusCode;
-            this.original = original;
-            message = "";
-            ref = this.original;
-            for (i = 0, len = ref.length; i < len; i++) {
-              error = ref[i];
-              if (message.length !== 0) {
-                message += " ";
-              }
-              message += error.message + ".";
-            }
-            this.message = message;
-            this.name = "FirstRally.API.Error";
-          }
+      })(Error);
 
-          return Error;
+      FirstRally.User = (function(superClass1) {
+        extend(User, superClass1);
 
-        })(Error);
+        function User() {
+          return User.__super__.constructor.apply(this, arguments);
+        }
 
-        API.User = (function(superClass1) {
-          extend(User, superClass1);
+        User.path_prefix = "/user";
 
-          function User() {
-            return User.__super__.constructor.apply(this, arguments);
-          }
+        User.update_profile = function(profile, done) {
+          return this.post("/profile", profile, done);
+        };
 
-          User.path_prefix = "/user";
+        User.reset_password = function(new_password, current_password, done) {
+          return this.post("/password", {
+            new_password: new_password,
+            current_password: current_password
+          }, done);
+        };
 
-          User.update_profile = function(profile, done) {
-            return this.post("/profile", profile, done);
-          };
+        User.login = function(email, password, done) {
+          return this.post(login, {
+            email: email,
+            password: password
+          }, done);
+        };
 
-          User.reset_password = function(new_password, current_password, done) {
-            return this.post("/password", {
-              new_password: new_password,
-              current_password: current_password
-            }, done);
-          };
+        return User;
 
-          User.login = function(email, password, done) {
-            return this.post(login, {
-              email: email,
-              password: password
-            }, done);
-          };
+      })(Base);
 
-          return User;
+      FirstRally.Notification = (function(superClass1) {
+        extend(Notification, superClass1);
 
-        })(Base);
+        function Notification() {
+          return Notification.__super__.constructor.apply(this, arguments);
+        }
 
-        API.Notification = (function(superClass1) {
-          extend(Notification, superClass1);
+        Notification.path_prefix = "/notification";
 
-          function Notification() {
-            return Notification.__super__.constructor.apply(this, arguments);
-          }
+        Notification.create = function(stream_id, price, direction, done) {
+          return this.post("/new", {
+            stream_id: stream_id,
+            price: price,
+            direction: direction
+          }, done);
+        };
 
-          Notification.path_prefix = "/notification";
+        Notification["delete"] = function(notification_id) {
+          return this["delete"]("/" + notification_id, done);
+        };
 
-          Notification.create = function(stream_id, price, direction, done) {
-            return this.post("/new", {
-              stream_id: stream_id,
-              price: price,
-              direction: direction
-            }, done);
-          };
+        return Notification;
 
-          Notification["delete"] = function(notification_id) {
-            return this["delete"]("/" + notification_id, done);
-          };
+      })(Base);
 
-          return Notification;
+      FirstRally.DataBatch = (function(superClass1) {
+        extend(DataBatch, superClass1);
 
-        })(Base);
+        function DataBatch() {
+          return DataBatch.__super__.constructor.apply(this, arguments);
+        }
 
-        API.DataBatch = (function(superClass1) {
-          extend(DataBatch, superClass1);
+        DataBatch.path_prefix = "/data_batch";
 
-          function DataBatch() {
-            return DataBatch.__super__.constructor.apply(this, arguments);
-          }
+        DataBatch.create = function(stream_id, start_date, end_date, done) {
+          return this.post("/new", {
+            exchange_identifier: stream_id,
+            start_date: start_date,
+            end_date: end_date
+          }, done);
+        };
 
-          DataBatch.path_prefix = "/data_batch";
+        return DataBatch;
 
-          DataBatch.create = function(stream_id, start_date, end_date, done) {
-            return this.post("/new", {
-              exchange_identifier: stream_id,
-              start_date: start_date,
-              end_date: end_date
-            }, done);
-          };
+      })(Base);
 
-          return DataBatch;
+      FirstRally.BatchFile = (function(superClass1) {
+        extend(BatchFile, superClass1);
 
-        })(Base);
+        function BatchFile() {
+          return BatchFile.__super__.constructor.apply(this, arguments);
+        }
 
-        API.BatchFile = (function(superClass1) {
-          extend(BatchFile, superClass1);
+        BatchFile.path_prefix = "/batch_file";
 
-          function BatchFile() {
-            return BatchFile.__super__.constructor.apply(this, arguments);
-          }
+        BatchFile.download = function(batch_file_id, done) {
+          return this.get("/" + batch_file_id + "/download", done);
+        };
 
-          BatchFile.path_prefix = "/batch_file";
-
-          BatchFile.download = function(batch_file_id, done) {
-            return this.get("/" + batch_file_id + "/download", done);
-          };
-
-          return BatchFile;
-
-        })(Base);
-
-        return API;
+        return BatchFile;
 
       })(Base);
 
       return FirstRally;
 
-    })();
+    })(Base);
     return FirstRally;
   });
 

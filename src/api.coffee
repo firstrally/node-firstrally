@@ -1,5 +1,5 @@
 include = (factory) ->
-  if typeof exports == 'object'
+  if module? and module.exports?
     request = require "request"
     btoa = require "btoa"
     jsSHA = require "../lib/jsSHA/src/sha512"
