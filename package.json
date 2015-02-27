@@ -1,0 +1,22 @@
+{
+  "name": "firstrally-api",
+  "version": "0.0.1",
+  "description": "First Rally API",
+  "main": "dist/firstrally-api.js",
+  "private": false,
+  "scripts": {},
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/firstrally/api.git"
+  },
+  "dependencies": {
+    "request": "*",
+    "btoa": "*",
+    "grunt": "*",
+    "grunt-contrib-coffee": "*",
+    "grunt-contrib-concat": "*",
+    "grunt-contrib-uglify": "*"
+  },
+  "license": "MIT License. Copyright First Rally. All rights reserved.",
+  "devDependencies": {}
+}
