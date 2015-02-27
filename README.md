@@ -29,6 +29,11 @@ Both your api key and secret can be generated within your account page on [first
 Here's an example of updating your profile information. Remember, each api key is associated with a specific user, so calling this method will update the information on your account.
 
 ```
+user = 
+  first_name: "Tim"
+  last_name: "Coulter"
+  email: "tim@timothyjcoulter.com"
+
 FirstRally.User.update_profile user, (error, body) ->
   console.log error # Request error, if it exists. More on that below.
   console.log body # Body of the response
