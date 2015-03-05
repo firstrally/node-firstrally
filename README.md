@@ -90,6 +90,7 @@ FirstRally.BatchFile.download batch_file_id, (response) ->
 * DataStream.subscribe
 * DataStream.unsubscribe
 * DataBatch.create
+* DataBatch.status
 * BatchFile.download
 
 Each method takes a `done` parameter as the last argument. This is a callback function of the form `function(error, responseBody)` which you can use to process the response. If error is `null`, your response was successful. See the section **Handling Errors** below for more information about error handling.
@@ -224,7 +225,7 @@ The `done` callback will be passed an object representing the data batch you jus
   end_date: '2015-03-05T06:07:17.000Z',
   created_at: '2015-03-05T06:07:17.000Z',
   updated_at: '2015-03-05T06:07:17.000Z',
-  deleted_at: null,
+  deleted_at: null
 }
 ```
 
@@ -234,7 +235,7 @@ Check on the status of a data batch. This takes a single argument:
 
 * `data_batch_id`: `Integer`, the id of the data batch.
 
-The done callback will be passed the same object as DataBatch.create() returns, except that if the data batch has been successfully processed, `batch_file` information will be included. If the batch has no yet been processed, no `batch_file` information will be returned. Example:
+The done callback will be passed the same object as DataBatch.create(), except that if the data batch has been successfully processed, `batch_file` information will be included. If the batch has no yet been processed, no `batch_file` information will be returned. Example:
 
 ```
 { id: 27,
@@ -260,3 +261,5 @@ The done callback will be passed the same object as DataBatch.create() returns, 
 Download the batch file specified by `batch_file_id`.
 
 * `batch_file_id`: `Integer`, the id of the batch file to download.
+
+This method is slightly different from the other methods in that it returns large amounts of data, so you’ll want to stream the response. See **Historical Data** above for an example.

@@ -65,7 +65,7 @@ include.call this, (inBrowser, request, jsSHA, btoa, Faye) ->
     @delete: (short_path, done) ->
       return @make_request(short_path, "DELETE", null, done)
 
-    @make_request: (short_path, method, body, done) ->
+    @make_request: (short_path, method, body, done=(()->)) ->
       path = @path(short_path)
 
       options =
@@ -85,8 +85,9 @@ include.call this, (inBrowser, request, jsSHA, btoa, Faye) ->
 
         options.headers["Authorization"] = "Basic #{b64string}"
 
-      if !done?
-        return request options
+      if done.length <= 1
+        response = request options
+        done(response)
       else
         request options, (error, response, body) ->
           if response.statusCode >= 400 and response.statusCode < 500 
@@ -157,12 +158,11 @@ include.call this, (inBrowser, request, jsSHA, btoa, Faye) ->
           window.open(@url(path))
         else
           # If in node, return a streamable file.
-          req = @get path
-          done(req)
+          @get path, done
 
     class @DataStream extends Base
       @path_prefix: "/data_stream"
-      @url: "https://rtc.bitcoinindex.es/connect"
+      @rtc_url: "https://rtc.bitcoinindex.es/connect"
 
       @list: (done) ->
         @get "/list", done
@@ -173,7 +173,7 @@ include.call this, (inBrowser, request, jsSHA, btoa, Faye) ->
 
         if !@client?
           @subscriptions = {}
-          @client = new Faye.Client(@url)
+          @client = new Faye.Client(@rtc_url)
 
           clientAuth = 
             outgoing: (message, callback) =>

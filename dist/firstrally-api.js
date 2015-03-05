@@ -120,7 +120,10 @@ d[4].b,d[5].a,d[5].b];else if("SHA-512"===c)a=[d[0].a,d[0].b,d[1].a,d[1].b,d[2].
       };
 
       Base.make_request = function(short_path, method, body, done) {
-        var b64string, options, path, shaObj, signature;
+        var b64string, options, path, response, shaObj, signature;
+        if (done == null) {
+          done = (function() {});
+        }
         path = this.path(short_path);
         options = {
           url: this.url(short_path),
@@ -137,8 +140,9 @@ d[4].b,d[5].a,d[5].b];else if("SHA-512"===c)a=[d[0].a,d[0].b,d[1].a,d[1].b,d[2].
           b64string = btoa(this.config.api_key + ":" + signature);
           options.headers["Authorization"] = "Basic " + b64string;
         }
-        if (done == null) {
-          return request(options);
+        if (done.length <= 1) {
+          response = request(options);
+          return done(response);
         } else {
           return request(options, function(error, response, body) {
             var errors;
@@ -289,13 +293,12 @@ d[4].b,d[5].a,d[5].b];else if("SHA-512"===c)a=[d[0].a,d[0].b,d[1].a,d[1].b,d[2].
         BatchFile.path_prefix = "/batch_file";
 
         BatchFile.download = function(batch_file_id, done) {
-          var path, req;
+          var path;
           path = "/" + batch_file_id + "/download";
           if (inBrowser) {
             return window.open(this.url(path));
           } else {
-            req = this.get(path);
-            return done(req);
+            return this.get(path, done);
           }
         };
 
@@ -312,7 +315,7 @@ d[4].b,d[5].a,d[5].b];else if("SHA-512"===c)a=[d[0].a,d[0].b,d[1].a,d[1].b,d[2].
 
         DataStream.path_prefix = "/data_stream";
 
-        DataStream.url = "https://rtc.bitcoinindex.es/connect";
+        DataStream.rtc_url = "https://rtc.bitcoinindex.es/connect";
 
         DataStream.list = function(done) {
           return this.get("/list", done);
@@ -328,7 +331,7 @@ d[4].b,d[5].a,d[5].b];else if("SHA-512"===c)a=[d[0].a,d[0].b,d[1].a,d[1].b,d[2].
           }
           if (this.client == null) {
             this.subscriptions = {};
-            this.client = new Faye.Client(this.url);
+            this.client = new Faye.Client(this.rtc_url);
             clientAuth = {
               outgoing: (function(_this) {
                 return function(message, callback) {
