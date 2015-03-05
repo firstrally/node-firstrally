@@ -97,7 +97,7 @@ Each method takes a `done` parameter as the last argument. This is a callback fu
 
 ##### update_profile(profile, done)
 
-Update your user's profile. Profile should be an javascript `object` with the following keys:
+Update your user's profile. Profile should be an `object` with the following keys:
 
 * `first_name`: `String`, the first name of your user.
 * `last_name`: `String`, the last name of your user.
@@ -144,8 +144,6 @@ List all data streams. Takes no parameters.
 
 Output is similar to the following. Notice that the top-most keys are the exchange ids, whose objects contain a label and an `streams` object that lists the streams. The keys within each exchange’s `streams` object are the stream ids (used by the real-time data and historical data APIs), and the values are an object containing data about the stream.
 
-All streams will contain a `primary_currency_code` -- often called the “base currency” -- and a `secondary_currency_code`, which is the currency being traded. Some streams, like Cryptsy, have other information provided by the exchange, but that information is not guaranteed across all exchanges and streams.
-
 ```
 {
   "bitx": {
@@ -178,6 +176,8 @@ All streams will contain a `primary_currency_code` -- often called the “base c
   # All the other exchanges...
 }
 ```
+
+All streams will contain a `primary_currency_code` -- often called the “base currency” -- and a `secondary_currency_code`, which is the currency being traded. Some streams, like Cryptsy, have other information provided by the exchange, but that information is not guaranteed across all exchanges and streams.
 
 ##### subscribe(stream_id, callbacks)
 
