@@ -22,7 +22,7 @@ FirstRally.User.update_profile
   console.log error
   console.log error instanceof Error
 
-FirstRally.Conversion.current "usd", (error, json) ->
+FirstRally.Conversion.current, "usd", "btc" (error, json) ->
   console.log error, json
 
 # FirstRally.DataStream.subscribe "coinbase/usd/btc",

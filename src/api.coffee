@@ -126,14 +126,24 @@ include.call this, (inBrowser, request, jsSHA, btoa, Faye) ->
       @path_prefix: "/conversions"
 
       @current: (from, to, done) ->
-        if typeof to != "string"
+        if typeof from == "function"
+          done = from
+          from = null
+          to = null
+
+        if typeof to == "function"
           done = to
           to = null
 
-        from = "/#{from}"
+        from = "/#{from}" if from?
         to = if to? then "/#{to}" else ""
 
-        short_path = "#{from}#{to}".toLowerCase()
+        if from?
+          short_path = "#{from}#{to}".toLowerCase()
+        else
+          short_path = ".json"
+
+        console.log "---------" + short_path
 
         @get short_path, done
 
