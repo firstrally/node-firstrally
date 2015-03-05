@@ -93,7 +93,56 @@ FirstRally.BatchFile.download batch_file_id, (response) ->
 * DataBatch.status
 * BatchFile.download
 
-Each method takes a `done` parameter as the last argument. This is a callback function of the form `function(error, responseBody)` which you can use to process the response. If error is `null`, your response was successful. See the section **Handling Errors** below for more information about error handling.
+#### Handling Responses
+
+Each method takes a `done` parameter as the last argument. This is a callback function of the form `function(error, json)` which you can use to process the response. If error is `null`, your response was successful. 
+
+Alternatively, you can pass a `done` callback with a different signature that takes a single `response` object, which you can then use to stream the response. See the **Historical Data** section above for an example.
+
+#### Handling Errors
+
+When using the first form of the `done` callback, the first argument passed will be an `error` object. If `error` is null, your request was successful and there were no errors. However, if your request failed, the `error` object will not be null, and will be of type `FirstRally.Error`, which extends from the native `Error` object. An example error object (converted to json) looks like this:
+
+```
+{ [FirstRally.Error: Invalid password.]
+  statusCode: 417,
+  message: 'Invalid password.',
+  original: [ { message: 'Invalid password' } ],
+  name: 'FirstRally.Error' }
+```
+
+Note that this error object contains a few extra attributes you can use for processing the response. These are:
+
+* `statusCode`: `Integer`, the HTTP error code for the response. This will be 400 or above.
+* `message`: `String`, a English-formatted message you can use for printing, or understanding the error message. This is a single string containing all individual error messages.
+* `original`: `Array`, an array of separate error messages originally sent by the server. The server can respond with more than one message (though most often won’t), and so you have access to the distinct error responses, if needed.
+
+### Conversions
+
+First Rally provides currency conversions to and from every currency we track, including both fiat and cryptocurrencies. Often conversions are the average trading value of a trading pair across all exchanges, where the currencies are traded directly (e.g., USD -> BTC). However, some conversions like NAUT -> TOP are indirect, where the calculation follows NAUT -> BTC -> LTC -> TOP. We call these “conversion chains”. Though conversions with longer conversion chains may not provide practical value in the trading process due to exchange fees, and may not be precise due to extra calculations, we feel these conversions are useful to achieve an approximate value when moving from one currency to another.
+
+##### current(from[, to], done) *: Does Not Require Authentication*
+
+Get the conversions for the specified currency/currencies.
+
+* `from`: `String`, which represents the first currency code you’d like conversions for.
+* `to`: `String`, optional; the second currency code for calculating the conversion.
+
+The `to` parameter is an optional parameter. When only `from` is passed, you’ll receive an object in the `done` callback that contains all the currencies `from` can convert to, as well as the conversion ratios. When `to` is passed, you’ll receive a single conversion from the `from` currency to the `to` currency.
+
+An example conversion response from USD to BTC looks like this:
+
+```
+{
+  "result": {
+    "conversion": 0.0036177106543686,
+    "chain": "usd/btc"
+  },
+  "timestamp": 1425577229972
+}
+```
+
+This response states that `1 USD` is equal to `0.0036177106543686 BTC` at the time of the conversion. The `timestamp` parameters specifies when this conversion was calculated, and the `chain` result shows how we calculated it. Chains with only two currencies represent a conversion which is directly traded across one or more exchanges.
 
 ### User
 

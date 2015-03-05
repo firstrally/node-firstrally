@@ -202,6 +202,31 @@ d[4].b,d[5].a,d[5].b];else if("SHA-512"===c)a=[d[0].a,d[0].b,d[1].a,d[1].b,d[2].
 
       })(Error);
 
+      FirstRally.Conversion = (function(superClass1) {
+        extend(Conversion, superClass1);
+
+        function Conversion() {
+          return Conversion.__super__.constructor.apply(this, arguments);
+        }
+
+        Conversion.path_prefix = "/conversions";
+
+        Conversion.current = function(from, to, done) {
+          var short_path;
+          if (typeof to !== "string") {
+            done = to;
+            to = null;
+          }
+          from = "/" + from;
+          to = to != null ? "/" + to : "";
+          short_path = ("" + from + to).toLowerCase();
+          return this.get(short_path, done);
+        };
+
+        return Conversion;
+
+      })(Base);
+
       FirstRally.User = (function(superClass1) {
         extend(User, superClass1);
 

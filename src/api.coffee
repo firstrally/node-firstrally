@@ -122,6 +122,21 @@ include.call this, (inBrowser, request, jsSHA, btoa, Faye) ->
         @message = message
         @name = "FirstRally.Error"
 
+    class @Conversion extends Base
+      @path_prefix: "/conversions"
+
+      @current: (from, to, done) ->
+        if typeof to != "string"
+          done = to
+          to = null
+
+        from = "/#{from}"
+        to = if to? then "/#{to}" else ""
+
+        short_path = "#{from}#{to}".toLowerCase()
+
+        @get short_path, done
+
     class @User extends Base 
       @path_prefix: "/user"
       @update_profile: (profile, done) ->

@@ -13,21 +13,33 @@ FirstRally.set
 #   console.log body
   # If no error, body is a list of streams. See documentation.
 
-FirstRally.DataStream.subscribe "coinbase/usd/btc",
-  message: (message) ->
-    console.log message
-  subscribe: () ->
-    console.log "Subscribed!"
+FirstRally.User.update_profile
+  first_name: "Tim"
+  last_name: "Coulter"
+  email: "tim@timothyjcoulter.com"
+  password: "Wrong password!"
+, (error, json) ->
+  console.log error
+  console.log error instanceof Error
 
-    # Example of what you *can't* do: Send messages.
-    # You can only receive messages with our API, so you'll receive an error.
-    publication = FirstRally.DataStream.client.publish("/coinbase/usd/btc", {something: "Something"})
+FirstRally.Conversion.current "usd", (error, json) ->
+  console.log error, json
 
-    publication.then () ->
-      # Shouldn't ever get here.
-      console.log('Message received by server!')
-    , (error) ->
-      console.log('There was a problem: ' + error.message)
+# FirstRally.DataStream.subscribe "coinbase/usd/btc",
+#   message: (message) ->
+#     console.log message
+#   subscribe: () ->
+#     console.log "Subscribed!"
+
+#     # Example of what you *can't* do: Send messages.
+#     # You can only receive messages with our API, so you'll receive an error.
+#     publication = FirstRally.DataStream.client.publish("/coinbase/usd/btc", {something: "Something"})
+
+#     publication.then () ->
+#       # Shouldn't ever get here.
+#       console.log('Message received by server!')
+#     , (error) ->
+#       console.log('There was a problem: ' + error.message)
 
 # setTimeout () ->
 #   console.log "Unsubscribing from stream..."
