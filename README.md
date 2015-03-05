@@ -32,7 +32,7 @@ Both your api key and secret can be generated within your account page on [first
 
 ## Real-time Data
 
-Most users will want to use this API wrapper to subscribe to real-time data streams. First Rally monitors hundreds of streams from dozens of exchanges. Streams are identified using the following system:
+Most users will want to use this API wrapper to subscribe to real-time data streams. First Rally monitors hundreds of streams from dozens of exchanges. Streams are identified using the following naming scheme:
 
 ```
 exchange_id/base_currency/secondary_currency
@@ -61,7 +61,7 @@ FirstRally.DataBatch.create "coinbase/usd/btc", moment().subtract(1, "day"), mom
     # and download the file if the batch succeeded in processing.
 ```
 
-**CAUTION:** Requesting a data batch will subtract the price of that data batch from your account when successfully processed. Currently there is no mechanism to provide you a price quote via the API before accepting the charge. 
+**CAUTION:** Requesting a data batch will subtract the price of that data batch from your account when successfully processed. Currently there is no mechanism to provide you a price quote via the API before accepting the charge, so call this function at your own risk. You will receive an error response from the server if your account does not have enough available credit. 
 
 To download a successfully processed batch file, perform the following: 
 
