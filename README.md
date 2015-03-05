@@ -57,26 +57,27 @@ moment = require "moment"
 
 FirstRally.DataBatch.create "coinbase/usd/btc", moment().subtract(1, "day"), moment(), (error, body) ->
   if !error?
-    # body contains a batch_file_id which you can then check the status of the data batch,
-    # and download the file if the batch succeeded in processing.
+    # body contains an id of the data batch which you can used to check the 
+    # status of the data batch and download the file once it has finished processing.
+    # See DataBatch.status() for more information.
 ```
 
 **CAUTION:** Requesting a data batch will subtract the price of that data batch from your account when successfully processed. Currently there is no mechanism to provide you a price quote via the API before accepting the charge, so call this function at your own risk. You will receive an error response from the server if your account does not have enough available credit. 
 
-To download a successfully processed batch file, perform the following: 
+To download a successfully processed batch file, perform the following. Note that the API differs slightly here in that you’ll receive a single response object that you can then stream. See BatchFile.download() for more details.
 
 ```
 fs = require "fs"
 
-batch_file_id = 23 # assume the batch file id is 23
+# Assume the batch file is 23. You can get the batch file's id
+# by calling DataBatch.status()
+batch_file_id = 23
 
-FirstRally.BatchFile.download batch_file_id, (error, stream) ->
-  if !error?
-    out = fs.createWriteStream("data_file.json.tar.gz")
-    stream.pipe(out)
+FirstRally.BatchFile.download batch_file_id, (response) ->
+  response.on 'error', (err) ->
+    console.log(err)
+  .pipe(fs.createWriteStream("data_file.json.gz"))
 ```
-
-TODO: The above hasn’t been implemented yet.
 
 ## API Methods
 
@@ -142,7 +143,7 @@ Delete the notification specified by `notification_id`.
 
 List all data streams. Takes no parameters.
 
-Output is similar to the following. Notice that the top-most keys are the exchange ids, whose objects contain a label and an `streams` object that lists the streams. The keys within each exchange’s `streams` object are the stream ids (used by the real-time data and historical data APIs), and the values are an object containing data about the stream.
+Output is similar to the following. Notice that the top-most keys are the exchange ids, whose objects contain a label and a `streams` object that lists the streams. The keys within each exchange’s `streams` object are the stream ids (used by the real-time data and historical data APIs), and the values are an object containing data about the stream.
 
 ```
 {
@@ -211,6 +212,46 @@ Request a set of historical data. This logs your request in our system *only*. O
 * `stream_id`: `String`. Stream ids are in the form `exchange/first_currency/second_currency`, and they specify the exchange and the currencies being traded. A stream_id of `coinbase_exchange/usd/btc`, for instance, will denote the value of Bitcoin in U.S. Dollars on Coinbase Exchange.
 * `start_date`: `Date`, the date specifying the lower bound of data to be included in the resultant batch file.
 * `end_date`: `Date`, the date specifying the upper bound of data to be included in the resultant batch file.
+
+The `done` callback will be passed an object representing the data batch you just created, which includes its id for checking its processing status at a later date. The object will look something like this:
+
+```
+{ id: 27,
+  user_id: 2,
+  job_id: 1478,
+  exchange_identifier: 'coinbase/usd/btc',
+  start_date: '2015-03-04T06:07:17.000Z',
+  end_date: '2015-03-05T06:07:17.000Z',
+  created_at: '2015-03-05T06:07:17.000Z',
+  updated_at: '2015-03-05T06:07:17.000Z',
+  deleted_at: null,
+}
+```
+
+##### status(data_batch_id, done)
+
+Check on the status of a data batch. This takes a single argument:
+
+* `data_batch_id`: `Integer`, the id of the data batch.
+
+The done callback will be passed the same object as DataBatch.create() returns, except that if the data batch has been successfully processed, `batch_file` information will be included. If the batch has no yet been processed, no `batch_file` information will be returned. Example:
+
+```
+{ id: 27,
+  user_id: 2,
+  job_id: 1478,
+  exchange_identifier: 'coinbase/usd/btc',
+  start_date: '2015-03-04T06:07:17.000Z',
+  end_date: '2015-03-05T06:07:17.000Z',
+  created_at: '2015-03-05T06:07:17.000Z',
+  updated_at: '2015-03-05T06:07:17.000Z',
+  deleted_at: null,
+  batch_file: { 
+    id: 24, 
+    file_name: 'coinbase_usd_btc_1425535637000.json.gz' 
+  } 
+}
+```
 
 ### BatchFile
 

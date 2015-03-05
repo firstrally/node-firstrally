@@ -4,7 +4,7 @@ include = (factory) ->
     btoa = require "btoa"
     jsSHA = require "../lib/jsSHA/src/sha512"
     faye = require "faye"
-    module.exports = factory(request, jsSHA, btoa, faye)
+    module.exports = factory(false, request, jsSHA, btoa, faye)
   else
     if !$? and !jQuery?
       throw "FirstRally api requires jQuery."
@@ -12,7 +12,7 @@ include = (factory) ->
     jQuery = $ || jQuery
 
     # Mimic node request module for what we need.
-    request = (options, done) ->
+    request = (options, done=(() ->)) ->
       options.type = options.method
       options.data = options.body
       options.processData = false
@@ -27,10 +27,10 @@ include = (factory) ->
 
     # Note: jsSHA's already included in the dist,
     # and btoa is a standard browser function.
-    this.FirstRally = factory(request, jsSHA, btoa)
+    this.FirstRally = factory(true, request, jsSHA, btoa)
   return
 
-include.call this, (request, jsSHA, btoa, Faye) ->
+include.call this, (inBrowser, request, jsSHA, btoa, Faye) ->
 
   # Note that Base holds a copy to the config object,
   # and all classes that extend Base hold a reference to
@@ -44,25 +44,32 @@ include.call this, (request, jsSHA, btoa, Faye) ->
       api_key: ""
       api_key_secret: ""
       version: "0.1"
+    @inBrowser: inBrowser
 
     @set: (options) ->
       for key of options
         @config[key] = options[key]
+
+    @path: (short_path) ->
+      "/api/v#{@config.version}#{@path_prefix}#{short_path}"
+
+    @url: (short_path) ->
+      "#{@config.scheme}://#{@config.host}#{@path(short_path)}"
     
     @get: (short_path, done) ->
-      @make_request(short_path, "GET", null, done)
+      return @make_request(short_path, "GET", null, done)
 
     @post: (short_path, json, done) ->
-      @make_request(short_path, "POST", json, done)
+      return @make_request(short_path, "POST", json, done)
 
     @delete: (short_path, done) ->
-      @make_request(short_path, "DELETE", null, done)
+      return @make_request(short_path, "DELETE", null, done)
 
-    @make_request: (short_path, method, body, done=(() ->)) ->
-      path = "/api/v#{@config.version}#{@path_prefix}#{short_path}"
+    @make_request: (short_path, method, body, done) ->
+      path = @path(short_path)
 
       options =
-        url: "#{@config.scheme}://#{@config.host}#{path}"
+        url: @url(short_path)
         headers: {}
         method: method
 
@@ -78,19 +85,27 @@ include.call this, (request, jsSHA, btoa, Faye) ->
 
         options.headers["Authorization"] = "Basic #{b64string}"
 
-      request options, (error, response, body) ->
-        if response.statusCode >= 400 and response.statusCode < 500 
-          if !error?
+      if !done?
+        return request options
+      else
+        request options, (error, response, body) ->
+          if response.statusCode >= 400 and response.statusCode < 500 
+            if !error?
 
+              try
+                errors = JSON.parse(body)
+              catch
+                done(body, body)
+                return
+
+              error = new FirstRally.Error(response.statusCode, errors)
+          else 
             try
-              errors = JSON.parse(body)
+              body = JSON.parse(body)
             catch
-              done(body, body)
-              return
+              # Do nothing.
 
-            error = new FirstRally.Error(response.statusCode, errors)
-
-        done(error, body)
+          done(error, body)
 
   class FirstRally extends Base
     class @Error extends Error
@@ -131,10 +146,19 @@ include.call this, (request, jsSHA, btoa, Faye) ->
       @create: (stream_id, start_date, end_date, done) ->
         @post "/new", {exchange_identifier: stream_id, start_date: start_date.getTime(), end_date: end_date.getTime()}, done 
 
+      @status: (data_batch_id, done) ->
+        @get "/#{data_batch_id}", done
+
     class @BatchFile extends Base
       @path_prefix: "/batch_file"
       @download: (batch_file_id, done) ->
-        @get "/#{batch_file_id}/download", done
+        path = "/#{batch_file_id}/download"
+        if inBrowser  
+          window.open(@url(path))
+        else
+          # If in node, return a streamable file.
+          req = @get path
+          done(req)
 
     class @DataStream extends Base
       @path_prefix: "/data_stream"

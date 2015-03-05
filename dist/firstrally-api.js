@@ -42,7 +42,7 @@ d[4].b,d[5].a,d[5].b];else if("SHA-512"===c)a=[d[0].a,d[0].b,d[1].a,d[1].b,d[2].
       btoa = require("btoa");
       jsSHA = require("../lib/jsSHA/src/sha512");
       faye = require("faye");
-      module.exports = factory(request, jsSHA, btoa, faye);
+      module.exports = factory(false, request, jsSHA, btoa, faye);
     } else {
       if ((typeof $ === "undefined" || $ === null) && (typeof jQuery === "undefined" || jQuery === null)) {
         throw "FirstRally api requires jQuery.";
@@ -51,6 +51,9 @@ d[4].b,d[5].a,d[5].b];else if("SHA-512"===c)a=[d[0].a,d[0].b,d[1].a,d[1].b,d[2].
       jQuery = $ || jQuery;
       request = function(options, done) {
         var failure, success;
+        if (done == null) {
+          done = (function() {});
+        }
         options.type = options.method;
         options.data = options.body;
         options.processData = false;
@@ -66,11 +69,11 @@ d[4].b,d[5].a,d[5].b];else if("SHA-512"===c)a=[d[0].a,d[0].b,d[1].a,d[1].b,d[2].
         };
         return jQuery.ajax(options).then(success, failure);
       };
-      this.FirstRally = factory(request, jsSHA, btoa);
+      this.FirstRally = factory(true, request, jsSHA, btoa);
     }
   };
 
-  include.call(this, function(request, jsSHA, btoa, Faye) {
+  include.call(this, function(inBrowser, request, jsSHA, btoa, Faye) {
     var Base, FirstRally;
     Base = (function() {
       function Base() {}
@@ -85,6 +88,8 @@ d[4].b,d[5].a,d[5].b];else if("SHA-512"===c)a=[d[0].a,d[0].b,d[1].a,d[1].b,d[2].
         version: "0.1"
       };
 
+      Base.inBrowser = inBrowser;
+
       Base.set = function(options) {
         var key, results;
         results = [];
@@ -92,6 +97,14 @@ d[4].b,d[5].a,d[5].b];else if("SHA-512"===c)a=[d[0].a,d[0].b,d[1].a,d[1].b,d[2].
           results.push(this.config[key] = options[key]);
         }
         return results;
+      };
+
+      Base.path = function(short_path) {
+        return "/api/v" + this.config.version + this.path_prefix + short_path;
+      };
+
+      Base.url = function(short_path) {
+        return this.config.scheme + "://" + this.config.host + (this.path(short_path));
       };
 
       Base.get = function(short_path, done) {
@@ -108,12 +121,9 @@ d[4].b,d[5].a,d[5].b];else if("SHA-512"===c)a=[d[0].a,d[0].b,d[1].a,d[1].b,d[2].
 
       Base.make_request = function(short_path, method, body, done) {
         var b64string, options, path, shaObj, signature;
-        if (done == null) {
-          done = (function() {});
-        }
-        path = "/api/v" + this.config.version + this.path_prefix + short_path;
+        path = this.path(short_path);
         options = {
-          url: this.config.scheme + "://" + this.config.host + path,
+          url: this.url(short_path),
           headers: {},
           method: method
         };
@@ -127,21 +137,31 @@ d[4].b,d[5].a,d[5].b];else if("SHA-512"===c)a=[d[0].a,d[0].b,d[1].a,d[1].b,d[2].
           b64string = btoa(this.config.api_key + ":" + signature);
           options.headers["Authorization"] = "Basic " + b64string;
         }
-        return request(options, function(error, response, body) {
-          var errors;
-          if (response.statusCode >= 400 && response.statusCode < 500) {
-            if (error == null) {
-              try {
-                errors = JSON.parse(body);
-              } catch (_error) {
-                done(body, body);
-                return;
+        if (done == null) {
+          return request(options);
+        } else {
+          return request(options, function(error, response, body) {
+            var errors;
+            if (response.statusCode >= 400 && response.statusCode < 500) {
+              if (error == null) {
+                try {
+                  errors = JSON.parse(body);
+                } catch (_error) {
+                  done(body, body);
+                  return;
+                }
+                error = new FirstRally.Error(response.statusCode, errors);
               }
-              error = new FirstRally.Error(response.statusCode, errors);
+            } else {
+              try {
+                body = JSON.parse(body);
+              } catch (_error) {
+
+              }
             }
-          }
-          return done(error, body);
-        });
+            return done(error, body);
+          });
+        }
       };
 
       return Base;
@@ -251,6 +271,10 @@ d[4].b,d[5].a,d[5].b];else if("SHA-512"===c)a=[d[0].a,d[0].b,d[1].a,d[1].b,d[2].
           }, done);
         };
 
+        DataBatch.status = function(data_batch_id, done) {
+          return this.get("/" + data_batch_id, done);
+        };
+
         return DataBatch;
 
       })(Base);
@@ -265,7 +289,14 @@ d[4].b,d[5].a,d[5].b];else if("SHA-512"===c)a=[d[0].a,d[0].b,d[1].a,d[1].b,d[2].
         BatchFile.path_prefix = "/batch_file";
 
         BatchFile.download = function(batch_file_id, done) {
-          return this.get("/" + batch_file_id + "/download", done);
+          var path, req;
+          path = "/" + batch_file_id + "/download";
+          if (inBrowser) {
+            return window.open(this.url(path));
+          } else {
+            req = this.get(path);
+            return done(req);
+          }
         };
 
         return BatchFile;
