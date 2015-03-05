@@ -36,12 +36,13 @@ d[4].b,d[5].a,d[5].b];else if("SHA-512"===c)a=[d[0].a,d[0].b,d[1].a,d[1].b,d[2].
     hasProp = {}.hasOwnProperty;
 
   include = function(factory) {
-    var btoa, jQuery, jsSHA, request;
+    var btoa, faye, jQuery, jsSHA, request;
     if ((typeof module !== "undefined" && module !== null) && (module.exports != null)) {
       request = require("request");
       btoa = require("btoa");
       jsSHA = require("../lib/jsSHA/src/sha512");
-      module.exports = factory(request, jsSHA, btoa);
+      faye = require("faye");
+      module.exports = factory(request, jsSHA, btoa, faye);
     } else {
       if ((typeof $ === "undefined" || $ === null) && (typeof jQuery === "undefined" || jQuery === null)) {
         throw "FirstRally api requires jQuery.";
@@ -69,7 +70,7 @@ d[4].b,d[5].a,d[5].b];else if("SHA-512"===c)a=[d[0].a,d[0].b,d[1].a,d[1].b,d[2].
     }
   };
 
-  include.call(this, function(request, jsSHA, btoa) {
+  include.call(this, function(request, jsSHA, btoa, Faye) {
     var Base, FirstRally;
     Base = (function() {
       function Base() {}
@@ -190,7 +191,7 @@ d[4].b,d[5].a,d[5].b];else if("SHA-512"===c)a=[d[0].a,d[0].b,d[1].a,d[1].b,d[2].
           return this.post("/profile", profile, done);
         };
 
-        User.reset_password = function(new_password, current_password, done) {
+        User.change_password = function(new_password, current_password, done) {
           return this.post("/password", {
             new_password: new_password,
             current_password: current_password
@@ -245,8 +246,8 @@ d[4].b,d[5].a,d[5].b];else if("SHA-512"===c)a=[d[0].a,d[0].b,d[1].a,d[1].b,d[2].
         DataBatch.create = function(stream_id, start_date, end_date, done) {
           return this.post("/new", {
             exchange_identifier: stream_id,
-            start_date: start_date,
-            end_date: end_date
+            start_date: start_date.getTime(),
+            end_date: end_date.getTime()
           }, done);
         };
 
@@ -268,6 +269,77 @@ d[4].b,d[5].a,d[5].b];else if("SHA-512"===c)a=[d[0].a,d[0].b,d[1].a,d[1].b,d[2].
         };
 
         return BatchFile;
+
+      })(Base);
+
+      FirstRally.DataStream = (function(superClass1) {
+        extend(DataStream, superClass1);
+
+        function DataStream() {
+          return DataStream.__super__.constructor.apply(this, arguments);
+        }
+
+        DataStream.path_prefix = "/data_stream";
+
+        DataStream.url = "https://rtc.bitcoinindex.es/connect";
+
+        DataStream.list = function(done) {
+          return this.get("/list", done);
+        };
+
+        DataStream.subscribe = function(stream_id, callbacks) {
+          var clientAuth;
+          if (callbacks == null) {
+            callbacks = {};
+          }
+          if (Faye == null) {
+            throw new Error("DataStreams::subscribe() should only be used within a server environment!");
+          }
+          if (this.client == null) {
+            this.subscriptions = {};
+            this.client = new Faye.Client(this.url);
+            clientAuth = {
+              outgoing: (function(_this) {
+                return function(message, callback) {
+                  if (message.ext == null) {
+                    message.ext = {};
+                  }
+                  message.ext.api_key = _this.config.api_key;
+                  message.ext.api_key_secret = _this.config.api_key_secret;
+                  return callback(message);
+                };
+              })(this)
+            };
+            this.client.addExtension(clientAuth);
+          }
+          this.subscriptions[stream_id] = this.client.subscribe("/" + stream_id, (function(_this) {
+            return function(message) {
+              if (callbacks.message != null) {
+                return callbacks.message(message);
+              }
+            };
+          })(this));
+          return this.subscriptions[stream_id].then((function(_this) {
+            return function() {
+              if (callbacks.subscribe != null) {
+                return callbacks.subscribe();
+              }
+            };
+          })(this));
+        };
+
+        DataStream.unsubscribe = function(stream_id) {
+          if (this.client == null) {
+            return;
+          }
+          if ((this.subscriptions == null) || (this.subscriptions[stream_id] == null)) {
+            return;
+          }
+          this.subscriptions[stream_id].cancel();
+          return delete this.subscriptions[stream_id];
+        };
+
+        return DataStream;
 
       })(Base);
 

@@ -3,7 +3,8 @@ include = (factory) ->
     request = require "request"
     btoa = require "btoa"
     jsSHA = require "../lib/jsSHA/src/sha512"
-    module.exports = factory(request, jsSHA, btoa)
+    faye = require "faye"
+    module.exports = factory(request, jsSHA, btoa, faye)
   else
     if !$? and !jQuery?
       throw "FirstRally api requires jQuery."
@@ -29,7 +30,7 @@ include = (factory) ->
     this.FirstRally = factory(request, jsSHA, btoa)
   return
 
-include.call this, (request, jsSHA, btoa) ->
+include.call this, (request, jsSHA, btoa, Faye) ->
 
   # Note that Base holds a copy to the config object,
   # and all classes that extend Base hold a reference to
@@ -110,7 +111,7 @@ include.call this, (request, jsSHA, btoa) ->
       @update_profile: (profile, done) ->
         @post "/profile", profile, done
 
-      @reset_password: (new_password, current_password, done) ->
+      @change_password: (new_password, current_password, done) ->
         @post "/password", {new_password, current_password}, done
 
       # For browser-based usage.
@@ -128,12 +129,55 @@ include.call this, (request, jsSHA, btoa) ->
     class @DataBatch extends Base
       @path_prefix: "/data_batch"
       @create: (stream_id, start_date, end_date, done) ->
-        @post "/new", {exchange_identifier: stream_id, start_date, end_date}, done 
+        @post "/new", {exchange_identifier: stream_id, start_date: start_date.getTime(), end_date: end_date.getTime()}, done 
 
     class @BatchFile extends Base
       @path_prefix: "/batch_file"
       @download: (batch_file_id, done) ->
         @get "/#{batch_file_id}/download", done
+
+    class @DataStream extends Base
+      @path_prefix: "/data_stream"
+      @url: "https://rtc.bitcoinindex.es/connect"
+
+      @list: (done) ->
+        @get "/list", done
+
+      @subscribe: (stream_id, callbacks={}) ->
+        if !Faye? 
+          throw new Error("DataStreams::subscribe() should only be used within a server environment!")
+
+        if !@client?
+          @subscriptions = {}
+          @client = new Faye.Client(@url)
+
+          clientAuth = 
+            outgoing: (message, callback) =>
+              # Add ext field if it's not present
+              message.ext = {} if !message.ext?
+
+              # Set the auth token
+              message.ext.api_key = @config.api_key
+              message.ext.api_key_secret = @config.api_key_secret
+
+              # Carry on and send the message to the server
+              callback(message)
+
+          @client.addExtension clientAuth
+
+        @subscriptions[stream_id] = @client.subscribe "/" + stream_id, (message) => 
+          callbacks.message(message) if callbacks.message?
+        @subscriptions[stream_id].then () =>
+          callbacks.subscribe() if callbacks.subscribe?
+
+      @unsubscribe: (stream_id) ->
+        return if !@client?
+        return if !@subscriptions? or !@subscriptions[stream_id]?
+
+        @subscriptions[stream_id].cancel()
+        delete @subscriptions[stream_id]
+
+
 
   return FirstRally
     
