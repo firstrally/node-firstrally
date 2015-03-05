@@ -87,7 +87,7 @@ Public methods:
 * DataStream.list
 * User.login
 
-Private methods (require authentication):
+Private methods (requires authentication):
 
 * User.update_profile
 * User.change_password
@@ -151,6 +151,18 @@ An example conversion response *from* USD *to* BTC looks like this:
 ```
 
 This response states that `1 USD` is equal to `0.0036177106543686 BTC` at the time of the conversion. The `timestamp` parameter specifies when this conversion was calculated, and the `chain` result shows how we calculated it. Chains with only two currencies represent a conversion that is directly traded across one or more exchanges.
+
+Note that you can alternate the currencies passed to Conversion.current() for the opposite conversion ratio. In this case, we’re converting *from* BTC to *usd*, meaning that `1 BTC` is worth `x USD` at the time of conversion:
+
+```
+{
+  "result": {
+    "conversion": 277.24704786142854,
+    "chain": "btc/usd"
+  },
+  "timestamp": 1425579028873
+}
+```
 
 ### User
 
