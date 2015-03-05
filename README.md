@@ -14,6 +14,12 @@ npm install firstrally
 FirstRally = require "firstrally"
 ```
 
+You can use the API wrapper by calling the functions below. See `example.coffee` for a quick example.
+
+## Authentication
+
+All functions require authentication unless otherwise specified. Before you're able to call an authenticated function, you must first set your `api_key` and `api_key_secret`. If you don't set these correctly, you'll receive a 401 Unauthorized error response from the server.
+
 ##### Set your API key and Secret
 
 ```
@@ -24,21 +30,53 @@ FirstRally.set
 
 Both your api key and secret can be generated within your account page on [firstrally.com](http://firstrally.com)
 
-##### Call the method of your choice
+## Real-time Data
 
-Here's an example of updating your profile information. Remember, each api key is associated with a specific user, so calling this method will update the information on your account.
+Most users will want to use this API wrapper to subscribe to real-time data streams. First Rally monitors hundreds of streams from dozens of exchanges. Streams are identified using the following system:
 
 ```
-user = 
-  first_name: "Tim"
-  last_name: "Coulter"
-  email: "tim@timothyjcoulter.com"
-  password: "passw0rd"
-
-FirstRally.User.update_profile user, (error, body) ->
-  console.log error # Request error, if it exists. More on that below.
-  console.log body # Body of the response
+exchange_id/base_currency/secondary_currency
 ```
+
+An example stream id would be "coinbase_exchange/usd/btc". This would denote a data stream tracking the value of Bitcoin in U.S. Dollars on Coinbase Exchange. You can list all available data streams by performing the following:
+
+```
+FirstRally.DataStream.list (error, json) ->
+  if !error?
+    console.log json # list all streams
+```
+
+See DataStream.list below for detailed information about the response. 
+
+## Historical Data
+
+In addition to real-time data, you can use our API to make requests for historical data. Historical data is requested in batches, which when processed will produce a data file for download. Batch requests are specified by a `stream_id`, as well as the `start_date` and `end_date` representing the timespan of the resultant data. You can request a batch file via the following:
+
+```
+moment = require "moment"
+
+FirstRally.DataBatch.create "coinbase/usd/btc", moment().subtract(1, "day"), moment(), (error, body) ->
+  if !error?
+    # body contains a batch_file_id which you can then check the status of the data batch,
+    # and download the file if the batch succeeded in processing.
+```
+
+**CAUTION:** Requesting a data batch will subtract the price of that data batch from your account when successfully processed. Currently there is no mechanism to provide you a price quote via the API before accepting the charge. 
+
+To download a successfully processed batch file, perform the following: 
+
+```
+fs = require "fs"
+
+batch_file_id = 23 # assume the batch file id is 23
+
+FirstRally.BatchFile.download batch_file_id, (error, stream) ->
+  if !error?
+    out = fs.createWriteStream("data_file.json.tar.gz")
+    stream.pipe(out)
+```
+
+TODO: The above hasn’t been implemented yet.
 
 ## API Methods
 
@@ -47,6 +85,9 @@ FirstRally.User.update_profile user, (error, body) ->
 * User.login
 * Notification.create
 * Notification.delete
+* DataStream.list
+* DataStream.subscribe
+* DataStream.unsubscribe
 * DataBatch.create
 * BatchFile.download
 
@@ -95,13 +136,79 @@ Delete the notification specified by `notification_id`.
 
 * `notification_id`: `Integer`, the id of the notification to delete.
 
+### DataStream
+
+##### list(done) *: Does Not Require Authentication*
+
+List all data streams. Takes no parameters.
+
+Output is similar to the following. Notice that the top-most keys are the exchange ids, whose objects contain a label and an `streams` object that lists the streams. The keys within each exchange’s `streams` object are the stream ids (used by the real-time data and historical data APIs), and the values are an object containing data about the stream.
+
+All streams will contain a `primary_currency_code` -- often called the “base currency” -- and a `secondary_currency_code`, which is the currency being traded. Some streams, like Cryptsy, have other information provided by the exchange, but that information is not guaranteed across all exchanges and streams.
+
+```
+{
+  "bitx": {
+    "label": "BitX",
+    "streams": {
+      "bitx/zar/btc": {
+        "primary_currency_code": "ZAR",
+        "secondary_currency_code": "BTC"
+      }
+    }
+  },
+  "cryptsy": {
+    "label": "Cryptsy",
+    "streams": {
+      "cryptsy/btc/42": {
+        "primary_currency_name": "BitCoin",
+        "primary_currency_code": "BTC",
+        "secondary_currency_name": "42Coin",
+        "secondary_currency_code": "42"
+      },
+      "cryptsy/btc/ac": {
+        "primary_currency_name": "BitCoin",
+        "primary_currency_code": "BTC",
+        "secondary_currency_name": "AsiaCoin",
+        "secondary_currency_code": "AC"
+      },
+      # All of the Cryptsy streams...
+    }
+  },
+  # All the other exchanges...
+}
+```
+
+##### subscribe(stream_id, callbacks)
+
+Subscribe to a data stream.
+
+* `stream_id`: `String`. Stream ids are in the form `exchange/first_currency/second_currency`, and they specify the exchange and the currencies being traded. A stream_id of `coinbase_exchange/usd/btc`, for instance, will denote the value of Bitcoin in U.S. Dollars on Coinbase Exchange.
+* `callbacks`: `Object`, an object that contains callback functions for specific events. Currently, two events/functions are supported: `message`, `subscribe`. The `message` function will be called every time new data has arrived from the stream; the `subscribe` function will be called when the subscription is successful.
+
+Example use of this function: 
+
+```
+FirstRally.DataStream.subscribe "coinbase/usd/btc", 
+  message: (messsage) ->
+    console.log "Message received on #{message.identifier}, sent at #{new Date(message.date)}. Price = #{message.value}"
+  subscribe: () ->
+    console.log "Successfully subscribed to coinbase/usd/btc!"
+```
+
+##### unsubscribe(stream_id) 
+
+Unsubscribe from messages on a specific stream. This will prevent listening for new price events across the stream, and you’ll need to re-subscribe to that stream to begin receiving messages again.
+
+* `stream_id`: `String`. Stream ids are in the form `exchange/first_currency/second_currency`, and they specify the exchange and the currencies being traded. A stream_id of `coinbase_exchange/usd/btc`, for instance, will denote the value of Bitcoin in U.S. Dollars on Coinbase Exchange.
+
 ### DataBatch
 
 ##### create(stream_id, start_date, end_date, done)
 
 Request a set of historical data. This logs your request in our system *only*. Once we process your request, a batch file will be available for download.
 
-* `stream_id`: `String`. See description of `stream_id` under **Notification.create**.
+* `stream_id`: `String`. Stream ids are in the form `exchange/first_currency/second_currency`, and they specify the exchange and the currencies being traded. A stream_id of `coinbase_exchange/usd/btc`, for instance, will denote the value of Bitcoin in U.S. Dollars on Coinbase Exchange.
 * `start_date`: `Date`, the date specifying the lower bound of data to be included in the resultant batch file.
 * `end_date`: `Date`, the date specifying the upper bound of data to be included in the resultant batch file.
 
