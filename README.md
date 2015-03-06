@@ -328,7 +328,7 @@ Check on the status of a data batch. This takes a single argument:
 
 * `data_batch_id`: `Integer`, the id of the data batch.
 
-The done callback will be passed the same object as DataBatch.create(), except that if the data batch has been successfully processed, `batch_file` information will be included. If the batch has no yet been processed, no `batch_file` information will be returned. Example:
+The done callback will be passed the same object as DataBatch.create(), except that if the data batch has been successfully processed, `batch_file` information will be included. If the batch has not yet been processed, no `batch_file` information will be returned. Example:
 
 ```
 { 
@@ -357,3 +357,26 @@ Download the batch file specified by `batch_file_id`.
 * `batch_file_id`: `Integer`, the id of the batch file to download.
 
 This method is slightly different from the other methods in that it returns large amounts of data, so you’ll want to stream the response. See **Historical Data** above for an example.
+
+# Building
+
+First, install dependencies:
+
+```
+npm install
+```
+
+To build javascript for distribution, run:
+
+```
+grunt
+```
+
+# Contributing
+
+Please help contribute to this API. To contribute, submit a pull request with your changes, making sure to include distribution builds as described above.
+
+### Author and Other Contributors
+
+@tcoulter - original author. 
+
