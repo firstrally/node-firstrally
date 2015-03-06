@@ -107,8 +107,8 @@ Private methods (requires authentication):
 * Notification.delete
 * DataStream.subscribe
 * DataStream.unsubscribe
-* DataBatch.create
 * DataBatch.quote
+* DataBatch.create
 * DataBatch.status
 * BatchFile.download
 
