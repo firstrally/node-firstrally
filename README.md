@@ -380,3 +380,7 @@ Please help contribute to this API. To contribute, submit a pull request with yo
 
 @tcoulter - original author. 
 
+# License
+
+MIT
+
