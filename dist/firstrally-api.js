@@ -231,7 +231,6 @@ d[4].b,d[5].a,d[5].b];else if("SHA-512"===c)a=[d[0].a,d[0].b,d[1].a,d[1].b,d[2].
           } else {
             short_path = ".json";
           }
-          console.log("---------" + short_path);
           return this.get(short_path, done);
         };
 

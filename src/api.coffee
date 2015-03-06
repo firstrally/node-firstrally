@@ -143,8 +143,6 @@ include.call this, (inBrowser, request, jsSHA, btoa, Faye) ->
         else
           short_path = ".json"
 
-        console.log "---------" + short_path
-
         @get short_path, done
 
     class @User extends Base 
