@@ -50,19 +50,31 @@ See DataStream.list below for detailed information about the response.
 
 ## Historical Data
 
-In addition to real-time data, you can use our API to make requests for historical data. Historical data is requested in batches, which when processed will produce a data file for download. Batch requests are specified by a `stream_id`, as well as the `start_date` and `end_date` representing the timespan of the resultant data. You can request a batch file via the following:
+In addition to real-time data, you can use our API to make requests for historical data. Historical data is requested in batches, which when processed will produce a data file for download. Batch requests are specified by a `stream_id`, as well as the `start_date` and `end_date` representing the timespan of the resultant data. 
+
+Before requesting a data batch, you must first request a price quote from our servers. Once receiving a quote, you can then queue the data batch:
 
 ```
 moment = require "moment"
 
-FirstRally.DataBatch.create "coinbase/usd/btc", moment().subtract(1, "day"), moment(), (error, body) ->
+FirstRally.DataBatch.quote "coinbase/usd/btc", moment().subtract(1, "day"), moment(), (error, quote) ->
   if !error?
-    # body contains an id of the data batch which you can used to check the 
-    # status of the data batch and download the file once it has finished processing.
-    # See DataBatch.status() for more information.
+    # quote contains a server-signed object specifying the price, currency and batch
+    # information you can then use to create the data batch.
+
+    # Do something with the price
+    price_in_dollars = quote.price
+
+    FirstRally.DataBatch.create quote, (error, data_batch) ->
+      if !error?
+        # data_batch contains information about the data batch that was just queued.
+        # When returned, it'll contain an id that you can then use to request the 
+        # status of the data batch and download the resultant data file. See 
+        # DataBatch.status() for more information.
+      
 ```
 
-**CAUTION:** Requesting a data batch will subtract the price of that data batch from your account when successfully processed. Currently there is no mechanism to provide you a price quote via the API before accepting the charge, so call this function at your own risk. You will receive an error response from the server if your account does not have enough available credit. 
+**CAUTION:** Requesting a data batch through DataBatch.create() will subtract the price of that data batch from your account when successfully processed. We require a server-signed quote as a security mechanism so you know exactly how much will be deducted from your account. Make sure you’ve reviewed the price of the desired data batch before requesting it.
 
 To download a successfully processed batch file, perform the following. Note that the API differs slightly here in that you’ll receive a single response object that you can then stream. See BatchFile.download() for more details.
 
@@ -96,6 +108,7 @@ Private methods (requires authentication):
 * DataStream.subscribe
 * DataStream.unsubscribe
 * DataBatch.create
+* DataBatch.quote
 * DataBatch.status
 * BatchFile.download
 
@@ -275,18 +288,27 @@ Unsubscribe from messages on a specific stream. This will prevent listening for 
 
 ### DataBatch
 
-##### create(stream_id, start_date, end_date, done)
+##### quote(stream_id, start_date, end_date, done)
 
-Request a set of historical data. This logs your request in our system *only*. Once we process your request, a batch file will be available for download.
+Before creating a batch request, you must first request a quote from our servers. This is a necessary security step to ensure you know exactly how much credit will be deducted from your account when the batch request is processed. The parameters are:
 
 * `stream_id`: `String`. Stream ids are in the form `exchange/first_currency/second_currency`, and they specify the exchange and the currencies being traded. A stream_id of `coinbase_exchange/usd/btc`, for instance, will denote the value of Bitcoin in U.S. Dollars on Coinbase Exchange.
 * `start_date`: `Date`, the date specifying the lower bound of data to be included in the resultant batch file.
 * `end_date`: `Date`, the date specifying the upper bound of data to be included in the resultant batch file.
 
+The `done` callback will receive a quote object like the following. You will need to pass this object into DataBatch.create() in order to create the requested data batch.
+
+##### create(quote, done)
+
+Request a set of historical data. This logs your request in our system *only*. Once we process your request, a batch file will be available for download. There is only one parameter:
+
+* `quote`: `Object`, a quote object returned from DataBatch.quote(). This quote will contain the data batch information you provided to DataBatch.quote() to describe the resultant data file. It will also be signed by our servers as being a valid quote. When sent to DataBatch.create(), we’ll then queue your request for processing, and deduct the quoted price from your account once the batch file has finished processing.
+
 The `done` callback will be passed an object representing the data batch you just created, which includes its id for checking its processing status at a later date. The object will look something like this:
 
 ```
-{ id: 27,
+{ 
+  id: 27,
   user_id: 2,
   job_id: 1478,
   exchange_identifier: 'coinbase/usd/btc',
@@ -298,6 +320,8 @@ The `done` callback will be passed an object representing the data batch you jus
 }
 ```
 
+See DataBatch.status() for further information about checking the status of your batch request.
+
 ##### status(data_batch_id, done)
 
 Check on the status of a data batch. This takes a single argument:
@@ -307,7 +331,8 @@ Check on the status of a data batch. This takes a single argument:
 The done callback will be passed the same object as DataBatch.create(), except that if the data batch has been successfully processed, `batch_file` information will be included. If the batch has no yet been processed, no `batch_file` information will be returned. Example:
 
 ```
-{ id: 27,
+{ 
+  id: 27,
   user_id: 2,
   job_id: 1478,
   exchange_identifier: 'coinbase/usd/btc',

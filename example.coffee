@@ -13,17 +13,17 @@ FirstRally.set
 #   console.log body
   # If no error, body is a list of streams. See documentation.
 
-FirstRally.User.update_profile
-  first_name: "Tim"
-  last_name: "Coulter"
-  email: "tim@timothyjcoulter.com"
-  password: "Wrong password!"
-, (error, json) ->
-  console.log error
-  console.log error instanceof Error
+# FirstRally.User.update_profile
+#   first_name: "Tim"
+#   last_name: "Coulter"
+#   email: "tim@timothyjcoulter.com"
+#   password: "Wrong password!"
+# , (error, json) ->
+#   console.log error
+#   console.log error instanceof Error
 
-FirstRally.Conversion.current, "usd", "btc" (error, json) ->
-  console.log error, json
+# FirstRally.Conversion.current, "usd", "btc" (error, json) ->
+#   console.log error, json
 
 # FirstRally.DataStream.subscribe "coinbase/usd/btc",
 #   message: (message) ->
@@ -49,15 +49,18 @@ FirstRally.Conversion.current, "usd", "btc" (error, json) ->
 # now = new Date()
 # yesterday = new Date(now.getTime() - 86400000)
 
-#FirstRally.DataBatch.create "coinbase/usd/btc", yesterday, now, (error, json) ->
-#  console.log error, json
+# FirstRally.DataBatch.quote "coinbase/usd/btc", yesterday, now, (error, quote) ->
+#   console.log error, quote
 
-# FirstRally.DataBatch.status 27, (error, json) ->
-#   if !json.batch_file?
-#     console.log "No downloadable batch file yet."
-#     return
+#   FirstRally.DataBatch.create quote, (error, json) ->
+#    console.log error, json
 
-#   console.log json
+FirstRally.DataBatch.status 28, (error, json) ->
+  if !json.batch_file?
+    console.log "No downloadable batch file yet."
+    return
+
+  console.log json
 
 #   FirstRally.BatchFile.download json.batch_file.id, (response) ->
 #     response.on "error", (err) ->

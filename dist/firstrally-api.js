@@ -304,11 +304,17 @@ d[4].b,d[5].a,d[5].b];else if("SHA-512"===c)a=[d[0].a,d[0].b,d[1].a,d[1].b,d[2].
 
         DataBatch.path_prefix = "/data_batch";
 
-        DataBatch.create = function(stream_id, start_date, end_date, done) {
-          return this.post("/new", {
-            exchange_identifier: stream_id,
+        DataBatch.quote = function(stream_id, start_date, end_date, done) {
+          return this.post("/quote", {
+            stream_id: stream_id,
             start_date: start_date.getTime(),
             end_date: end_date.getTime()
+          }, done);
+        };
+
+        DataBatch.create = function(quote, done) {
+          return this.post("/new", {
+            quote: quote
           }, done);
         };
 

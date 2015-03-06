@@ -169,8 +169,11 @@ include.call this, (inBrowser, request, jsSHA, btoa, Faye) ->
 
     class @DataBatch extends Base
       @path_prefix: "/data_batch"
-      @create: (stream_id, start_date, end_date, done) ->
-        @post "/new", {exchange_identifier: stream_id, start_date: start_date.getTime(), end_date: end_date.getTime()}, done 
+      @quote: (stream_id, start_date, end_date, done) ->
+        @post "/quote", {stream_id: stream_id, start_date: start_date.getTime(), end_date: end_date.getTime()}, done 
+
+      @create: (quote, done) ->
+        @post "/new", {quote}, done 
 
       @status: (data_batch_id, done) ->
         @get "/#{data_batch_id}", done
