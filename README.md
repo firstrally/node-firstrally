@@ -48,6 +48,8 @@ FirstRally.DataStream.list (error, json) ->
 
 See DataStream.list below for detailed information about the response. 
 
+Subscribing to a stream is just as easy
+
 ## Historical Data
 
 In addition to real-time data, you can use our API to make requests for historical data. Historical data is requested in batches, which when processed will produce a data file for download. Batch requests are specified by a `stream_id`, as well as the `start_date` and `end_date` representing the timespan of the resultant data. 
@@ -101,6 +103,7 @@ Public methods:
 
 Private methods (requires authentication):
 
+* User.balance
 * User.update_profile
 * User.change_password
 * Notification.create
@@ -111,6 +114,8 @@ Private methods (requires authentication):
 * DataBatch.create
 * DataBatch.status
 * BatchFile.download
+* Subscription.quote
+* Subscription.frequency
 
 ##### Handling Responses
 
@@ -178,6 +183,16 @@ Note that you can alternate the currencies passed to Conversion.current() for th
 ```
 
 ### User
+
+##### balance(done)
+
+Get the current available balance on your account. The `done` callback will be passed an object like the following:
+
+```
+{
+  balance: 947.50
+}
+```
 
 ##### update_profile(profile, done)
 
@@ -274,7 +289,7 @@ Example use of this function:
 
 ```
 FirstRally.DataStream.subscribe "coinbase/usd/btc", 
-  message: (messsage) ->
+  message: (message) ->
     console.log "Message received on #{message.identifier}, sent at #{new Date(message.date)}. Price = #{message.value}"
   subscribe: () ->
     console.log "Successfully subscribed to coinbase/usd/btc!"
@@ -357,6 +372,24 @@ Download the batch file specified by `batch_file_id`.
 * `batch_file_id`: `Integer`, the id of the batch file to download.
 
 This method is slightly different from the other methods in that it returns large amounts of data, so you’ll want to stream the response. See **Historical Data** above for an example.
+
+### Subscription
+
+Manage your Real-Time Data subscription.
+
+##### quote(frequency, done)
+
+Get a quote for your Real-Time Data subscription, on a `daily`, `weekly` or `monthly` basis. This will return a quote object with an amount that will be deducted from your account on the frequency specified.
+
+* `frequency`: `String`, one of `daily`, `weekly`, or `monthly`. The period in which we will deduct funds from your account to sustain your subscription. 
+
+This method will return an error response if you already have a Real-Time data subscription at any frequency. 
+
+##### create(quote, done)
+
+Start the actual subscription. You must first pass in a quote object from Subscription.quote().
+
+* `quote`: `Object`, quote object returned from Subscription.quote() 
 
 # Building
 

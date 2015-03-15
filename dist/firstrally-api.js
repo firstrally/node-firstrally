@@ -146,7 +146,7 @@ d[4].b,d[5].a,d[5].b];else if("SHA-512"===c)a=[d[0].a,d[0].b,d[1].a,d[1].b,d[2].
         } else {
           return request(options, function(error, response, body) {
             var errors;
-            if (response.statusCode >= 400 && response.statusCode < 500) {
+            if (response.statusCode >= 400) {
               if (error == null) {
                 try {
                   errors = JSON.parse(body);
@@ -247,6 +247,10 @@ d[4].b,d[5].a,d[5].b];else if("SHA-512"===c)a=[d[0].a,d[0].b,d[1].a,d[1].b,d[2].
 
         User.path_prefix = "/user";
 
+        User.balance = function(done) {
+          return this.get("/balance", done);
+        };
+
         User.update_profile = function(profile, done) {
           return this.post("/profile", profile, done);
         };
@@ -345,6 +349,31 @@ d[4].b,d[5].a,d[5].b];else if("SHA-512"===c)a=[d[0].a,d[0].b,d[1].a,d[1].b,d[2].
         };
 
         return BatchFile;
+
+      })(Base);
+
+      FirstRally.Subscription = (function(superClass1) {
+        extend(Subscription, superClass1);
+
+        function Subscription() {
+          return Subscription.__super__.constructor.apply(this, arguments);
+        }
+
+        Subscription.path_prefix = "/subscription";
+
+        Subscription.quote = function(frequency, done) {
+          return this.post("/quote", {
+            frequency: frequency
+          }, done);
+        };
+
+        Subscription.create = function(quote, done) {
+          return this.post("/new", {
+            quote: quote
+          }, done);
+        };
+
+        return Subscription;
 
       })(Base);
 

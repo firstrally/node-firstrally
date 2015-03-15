@@ -90,9 +90,10 @@ include.call this, (inBrowser, request, jsSHA, btoa, Faye) ->
         done(response)
       else
         request options, (error, response, body) ->
-          if response.statusCode >= 400 and response.statusCode < 500 
-            if !error?
-
+          # Remember, this response handler needs to work with both
+          # request and jQuery.ajax. 
+          if response.statusCode >= 400
+            if !error? # Some request error that doesn't constitute a server response
               try
                 errors = JSON.parse(body)
               catch
@@ -147,6 +148,9 @@ include.call this, (inBrowser, request, jsSHA, btoa, Faye) ->
 
     class @User extends Base 
       @path_prefix: "/user"
+      @balance: (done) ->
+        @get "/balance", done
+
       @update_profile: (profile, done) ->
         @post "/profile", profile, done
 
@@ -185,6 +189,14 @@ include.call this, (inBrowser, request, jsSHA, btoa, Faye) ->
         else
           # If in node, return a streamable file.
           @get path, done
+
+    class @Subscription extends Base
+      @path_prefix: "/subscription"
+      @quote: (frequency, done) ->
+        @post "/quote", {frequency}, done
+
+      @create: (quote, done) ->
+        @post "/new", {quote}, done
 
     class @DataStream extends Base
       @path_prefix: "/data_stream"
