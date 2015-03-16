@@ -81,7 +81,7 @@ d[4].b,d[5].a,d[5].b];else if("SHA-512"===c)a=[d[0].a,d[0].b,d[1].a,d[1].b,d[2].
       Base.path_prefix = "";
 
       Base.config = {
-        host: "bitcoinindex.es",
+        host: "firstrally.com",
         scheme: "https",
         api_key: "",
         api_key_secret: "",
@@ -386,7 +386,7 @@ d[4].b,d[5].a,d[5].b];else if("SHA-512"===c)a=[d[0].a,d[0].b,d[1].a,d[1].b,d[2].
 
         DataStream.path_prefix = "/data_stream";
 
-        DataStream.rtc_url = "https://rtc.bitcoinindex.es/connect";
+        DataStream.rtc_url = "https://rtc.firstrally.com/connect";
 
         DataStream.list = function(done) {
           return this.get("/list", done);

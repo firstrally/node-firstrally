@@ -39,7 +39,7 @@ include.call this, (inBrowser, request, jsSHA, btoa, Faye) ->
   class Base
     @path_prefix: ""
     @config: 
-      host: "bitcoinindex.es"
+      host: "firstrally.com"
       scheme: "https"
       api_key: ""
       api_key_secret: ""
@@ -200,7 +200,7 @@ include.call this, (inBrowser, request, jsSHA, btoa, Faye) ->
 
     class @DataStream extends Base
       @path_prefix: "/data_stream"
-      @rtc_url: "https://rtc.bitcoinindex.es/connect"
+      @rtc_url: "https://rtc.firstrally.com/connect"
 
       @list: (done) ->
         @get "/list", done
