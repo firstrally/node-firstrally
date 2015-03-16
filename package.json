@@ -1,5 +1,5 @@
 {
-  "name": "firstrally-api",
+  "name": "firstrally",
   "version": "0.0.1",
   "description": "First Rally API",
   "main": "dist/firstrally-api.js",
