@@ -12,12 +12,14 @@
   "dependencies": {
     "request": "*",
     "btoa": "*",
+    "faye": "*"
+  },
+  "devDependencies": {
     "grunt": "*",
     "grunt-contrib-coffee": "*",
     "grunt-contrib-concat": "*",
     "grunt-contrib-uglify": "*",
     "faye": "*"
   },
-  "license": "MIT License. Copyright First Rally. All rights reserved.",
-  "devDependencies": {}
+  "license": "MIT License. Copyright First Rally. All rights reserved."
 }
