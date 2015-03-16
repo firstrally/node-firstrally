@@ -1,6 +1,6 @@
 # First Rally API
 
-## Install (coming soon)
+## Install
 
 ```
 npm install firstrally
